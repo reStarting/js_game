@@ -81,9 +81,10 @@ function onClick(){
 		var star = foundStars[i];
 		var pos = star.x + "," + star.y;
 		star.sprite.destroy();
-		delete stars[pos];
+		// delete stars[pos];
+		stars[pos] = null;
 	}
-	console.log(stars)
+	
 }
 
 function update()
