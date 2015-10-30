@@ -1,9 +1,9 @@
-var game = new Phaser.Game(320, 480, Phaser.AUTO, 'game')
-var welcome = {
-	init: function(){
+var game = new Phaser.Game(480, 800, Phaser.AUTO, 'game')
 
-	},
-	preload: function(){
-	}
-}
+var Welcome = require('./scene/welcome.js')(game);
+
+game.state.add('welcome', Welcome);
+
+game.state.start('welcome');
+
 
