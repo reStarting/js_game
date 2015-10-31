@@ -90,6 +90,7 @@ function onClick(){
 function moveClose(game)
 {
 	var GAME_HEIGHT = game.world.height;
+	//纵向
 	for(var i=0; i<GAME_RECT; i++)
 	{
 		var np = nullPos(i)
@@ -98,13 +99,13 @@ function moveClose(game)
 			var up = findUp(i, np);
 			if(up != null)
 			{
-				console.log(i, up,'->', i, np);
+				// console.log(i, up,'->', i, np);
 				var temp = stars[i+','+up];
 				stars[i+','+up] = stars[i+','+np];
 				stars[i+','+np] = temp;
 				stars[i+','+np].x = i;
 				stars[i+','+np].y = np;
-				game.add.tween(stars[i+','+np].sprite).to({ y: GAME_HEIGHT - np * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+				// game.add.tween(stars[i+','+np].sprite).to({ y: GAME_HEIGHT - np * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
 				np = nullPos(i);
 			}
 			else
@@ -112,10 +113,32 @@ function moveClose(game)
 				break;
 			}
 		}
-		var nullLine = nullPos(i);
-		if(nullLine == 0)
+	}
+	//横向
+	for(var i=0; i<GAME_RECT; i++)
+	{
+		var nl = nullLine(i);
+		while(nl)
 		{
-			moveToLeft(game, i)
+			var right = findRight(i);
+			if(right != null)
+			{
+				moveToLeft(right, right - i);
+				nl = nullLine(i);
+			}
+			else
+			{
+				break;
+			}
+		}
+	}
+	//动画
+	for(var pos in stars)
+	{
+		var star = stars[pos];
+		if(star)
+		{
+			game.add.tween(star.sprite).to({x: star.x * STAR_SIZE, y: GAME_HEIGHT - star.y * STAR_SIZE }, 800, Phaser.Easing.Quadratic.InOut, true, 0);
 		}
 	}
 	console.log(stars)
@@ -131,6 +154,14 @@ function nullPos(x)
 	}
 	return i;
 }
+function nullLine(i)
+{
+	if(nullPos(i) == 0)
+	{
+		return true;
+	}
+	return false;
+}
 function findUp(x, y)
 {
 	var i = y;
@@ -141,20 +172,29 @@ function findUp(x, y)
 	}
 	return i;
 }
-function moveToLeft(game, i)
+function findRight(x)
 {
-	for(var y=0; y< GAME_RECT; y++)
+	var i = x;
+	while(!stars[i+',0'])
 	{
-		for(var x=i+1; x< GAME_RECT; x++)
+		i++;
+		if(i > 9) return null;
+	}
+	return i;
+}
+function moveToLeft(line, step)
+{
+	for(var x=line; x< GAME_RECT; x++)
+	{
+		for(var y=0; y< GAME_RECT; y++)
 		{
-			console.log(x,y,'->',x-1,y)
+			console.log(x,y,'->',x-step,y)
 			var temp = stars[x+','+y];
-			stars[x+','+y] = stars[(x-1)+','+y];
-			stars[(x-1)+','+y] = temp;
-			if(stars[(x-1)+','+y])
+			stars[x+','+y] = stars[(x-step)+','+y];
+			stars[(x-step)+','+y] = temp;
+			if(stars[(x-step)+','+y])
 			{
-				stars[(x-1)+','+y].x = x - 1;	
-				game.add.tween(stars[(x-1)+','+y].sprite).to({ x: (x-1) * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+				stars[(x-step)+','+y].x = x - step;	
 			}
 		}
 	}
