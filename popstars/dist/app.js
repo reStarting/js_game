@@ -146,7 +146,7 @@
 		for (var i = 0; i < GAME_RECT; i++) {
 			for (var j = 0; j < GAME_RECT; j++) {
 				var randomColor = colors[random(0, 5)];
-				var sprite = game.add.sprite(j * STAR_SIZE, GAME_HEIGHT - (i + 1) * STAR_SIZE, randomColor);
+				var sprite = game.add.sprite(j * STAR_SIZE, GAME_HEIGHT - i * STAR_SIZE, randomColor);
 				var star = new Star(j, i, randomColor, sprite);
 				stars[j + "," + i] = star;
 				sprite.events.onInputDown.add(onClick, star);
@@ -160,16 +160,88 @@
 	}
 
 	function onClick() {
+		var game = this.sprite.game;
 		var foundStars = this.findSame(stars),
 		    len = foundStars.length;
 		if (len < 2) return;
+		var positions = [];
 		for (var i = 0; i < len; i++) {
 			var star = foundStars[i];
 			var pos = star.x + "," + star.y;
 			star.sprite.destroy();
 			// delete stars[pos];
 			stars[pos] = null;
+			positions.push({ x: star.x, y: star.y });
+			// game.add.tween(star.sprite).to({ y: 48 }, 100, Phaser.Easing.Quadratic.InOut, true, 0);
 		}
+		moveClose(game, positions);
+	}
+
+	function moveClose(game, pos) {
+		var GAME_HEIGHT = game.world.height;
+		for (var i = 0, len = pos.length; i < len; i++) {
+			var p = pos[i];
+			nullToTop(p);
+		}
+		// for(var pos in stars)
+		// {
+		// 	var star = stars[pos];
+		// 	if(star)
+		// 	{
+		// 		var p = pos.split(",");
+		// 		var x = parseInt(p[0]);
+		// 		var y = parseInt(p[1]);
+		// 		var posX = findX(x);
+		// 		var posY = findY(x, y);
+		// 		if(x != posX || y != posY)
+		// 		{
+		// 			var temp = stars[posX + ',' + posY];
+		// 			stars[posX + ',' + posY] = stars[x+','+y];
+		// 			stars[x+','+y] = temp;
+		// 			stars[posX + ',' + posY].x = posX;
+		// 			stars[posX + ',' + posY].y = posY;
+		// 			game.add.tween(star.sprite).to({ y: GAME_HEIGHT - star.y * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+		// 		}
+		// 	}
+		// }
+		console.log(stars);
+	}
+
+	function nullToTop(pos) {
+		var starY = pos.y;
+		var x = pos.x;
+		var topY = 9;
+		for (; starY < topY; starY++) {
+			var temp = stars[x + ',' + starY];
+			stars[x + ',' + starY] = stars[x + ',' + (starY + 1)];
+			stars[x + ',' + (starY + 1)] = temp;
+			console.log(x, starY, '->', x, starY + 1, stars[x + ',' + (starY + 1)]);
+			console.log();
+			// if(stars[x + ',' + starY]) stars[x + ',' + starY].y = starY + 1;
+			// if(stars[x+','+(starY+1)]) stars[x+','+(starY+1)].y = starY;
+		}
+	}
+
+	function findX(x) {
+		var hasLeft = false;
+		if (!x) x = 0;
+		var leftX = x - 1 < 0 ? 0 : x - 1;
+		if (stars[leftX + ',0']) {
+			hasLeft = true;
+		}
+		if (hasLeft) {
+			return x;
+		}
+		return x - 1;
+	}
+
+	function findY(x, y) {
+		var retY = 0;
+		for (var i = 0; i <= y; i++) {
+			retY = i;
+			if (!stars[x + ',' + i]) break;
+		}
+		return retY;
 	}
 
 	function update() {}
@@ -190,6 +262,7 @@
 		this.color = color;
 		this.sprite = sprite;
 		sprite.inputEnabled = true;
+		sprite.anchor.set(0, 1);
 	}
 
 	Star.prototype.findSame = function (all) {
