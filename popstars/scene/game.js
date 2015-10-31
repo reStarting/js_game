@@ -12,7 +12,7 @@ var gameFont = {
   shadowColor: '#000000'
 };
 var stars = {};
-var level, goal,currentScore, combo;
+var level, goal,currentScore, score=0, combo, emitter;
 
 
 function GameState(game)
@@ -28,6 +28,8 @@ function GameState(game)
 		game.load.image('combo1', 'assets/combo_1.png');
 		game.load.image('combo2', 'assets/combo_2.png');
 		game.load.image('combo3', 'assets/combo_3.png');
+
+		game.load.image('fireworks', 'assets/fireworks.png')
 	};
 	this.create = function(){
 		game.add.image(0, 0, 'mainBg');
@@ -37,15 +39,29 @@ function GameState(game)
  		goal = game.add.text(game.world.centerX, 15, "goal: 1000", gameFont);
  		goal.anchor.set(0.5, 0);
 
- 		currentScore = game.add.text(game.world.centerX, 70, "0", gameFont);
+ 		currentScore = game.add.text(game.world.centerX, 70, score, gameFont);
  		currentScore.anchor.set(0.5, 0);
 
  		combo = game.add.image(game.world.centerX, 120, "combo3");
  		combo.anchor.set(0.5, 0);
 		//init stars
 		init(game);
+
+
+    emitter = game.add.emitter(0, 0, 100);
+
+    emitter.makeParticles('fireworks');
+    emitter.gravity = 200;
+
 	};
 	this.update = update;
+}
+
+function particleBurst(pointer)
+{
+	  emitter.x = pointer.x;
+    emitter.y = pointer.y;
+    emitter.start(true, 1000, null, 10);
 }
 
 function init(game)
@@ -71,8 +87,9 @@ function random(from, to)
 	return parseInt(Math.random()*to,10)+from;
 }
 
-function onClick(){
+function onClick(pointer){
 	var game = this.sprite.game;
+	var HEIGHT = game.world.height;
 	var foundStars = this.findSame(stars),len=foundStars.length;
 	if(len < 2) return;
 	// var positions = [];
@@ -83,7 +100,10 @@ function onClick(){
 		star.sprite.destroy();
 		// delete stars[pos];
 		stars[pos] = null;
+		particleBurst({x:(star.x+0.5) * STAR_SIZE, y: HEIGHT - (star.y+0.5) * STAR_SIZE});
 	}
+	//update score
+	score += len * len * 5;
 	moveClose(game);
 }
 
@@ -133,12 +153,14 @@ function moveClose(game)
 		}
 	}
 	//动画
+	var delayCnt = 0;
 	for(var pos in stars)
 	{
 		var star = stars[pos];
 		if(star)
 		{
-			game.add.tween(star.sprite).to({x: star.x * STAR_SIZE, y: GAME_HEIGHT - star.y * STAR_SIZE }, 800, Phaser.Easing.Quadratic.InOut, true, 0);
+			delayCnt++;
+			game.add.tween(star.sprite).to({x: star.x * STAR_SIZE, y: GAME_HEIGHT - star.y * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 2 * delayCnt);
 		}
 	}
 	console.log(stars)
@@ -203,6 +225,7 @@ function moveToLeft(line, step)
 
 function update()
 {
+	currentScore.text = score;
 }
 
 
