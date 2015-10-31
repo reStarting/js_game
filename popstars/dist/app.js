@@ -133,7 +133,6 @@
 
 			combo = game.add.image(game.world.centerX, 120, "combo3");
 			combo.anchor.set(0.5, 0);
-
 			//init stars
 			init(game);
 		};
@@ -164,84 +163,73 @@
 		var foundStars = this.findSame(stars),
 		    len = foundStars.length;
 		if (len < 2) return;
-		var positions = [];
+		// var positions = [];
 		for (var i = 0; i < len; i++) {
 			var star = foundStars[i];
 			var pos = star.x + "," + star.y;
 			star.sprite.destroy();
 			// delete stars[pos];
 			stars[pos] = null;
-			positions.push({ x: star.x, y: star.y });
-			// game.add.tween(star.sprite).to({ y: 48 }, 100, Phaser.Easing.Quadratic.InOut, true, 0);
 		}
-		moveClose(game, positions);
+		moveClose(game);
 	}
 
-	function moveClose(game, pos) {
+	function moveClose(game) {
 		var GAME_HEIGHT = game.world.height;
-		for (var i = 0, len = pos.length; i < len; i++) {
-			var p = pos[i];
-			nullToTop(p);
+		for (var i = 0; i < GAME_RECT; i++) {
+			var np = nullPos(i);
+			while (np != null) {
+				var up = findUp(i, np);
+				if (up != null) {
+					console.log(i, up, '->', i, np);
+					var temp = stars[i + ',' + up];
+					stars[i + ',' + up] = stars[i + ',' + np];
+					stars[i + ',' + np] = temp;
+					stars[i + ',' + np].x = i;
+					stars[i + ',' + np].y = np;
+					game.add.tween(stars[i + ',' + np].sprite).to({ y: GAME_HEIGHT - np * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+					np = nullPos(i);
+				} else {
+					break;
+				}
+			}
+			var nullLine = nullPos(i);
+			if (nullLine == 0) {
+				moveToLeft(game, i);
+			}
 		}
-		// for(var pos in stars)
-		// {
-		// 	var star = stars[pos];
-		// 	if(star)
-		// 	{
-		// 		var p = pos.split(",");
-		// 		var x = parseInt(p[0]);
-		// 		var y = parseInt(p[1]);
-		// 		var posX = findX(x);
-		// 		var posY = findY(x, y);
-		// 		if(x != posX || y != posY)
-		// 		{
-		// 			var temp = stars[posX + ',' + posY];
-		// 			stars[posX + ',' + posY] = stars[x+','+y];
-		// 			stars[x+','+y] = temp;
-		// 			stars[posX + ',' + posY].x = posX;
-		// 			stars[posX + ',' + posY].y = posY;
-		// 			game.add.tween(star.sprite).to({ y: GAME_HEIGHT - star.y * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
-		// 		}
-		// 	}
-		// }
 		console.log(stars);
 	}
 
-	function nullToTop(pos) {
-		var starY = pos.y;
-		var x = pos.x;
-		var topY = 9;
-		for (; starY < topY; starY++) {
-			var temp = stars[x + ',' + starY];
-			stars[x + ',' + starY] = stars[x + ',' + (starY + 1)];
-			stars[x + ',' + (starY + 1)] = temp;
-			console.log(x, starY, '->', x, starY + 1, stars[x + ',' + (starY + 1)]);
-			console.log();
-			// if(stars[x + ',' + starY]) stars[x + ',' + starY].y = starY + 1;
-			// if(stars[x+','+(starY+1)]) stars[x+','+(starY+1)].y = starY;
+	function nullPos(x) {
+		var i = 0;
+		while (stars[x + ',' + i]) {
+			i++;
+			if (i > 9) return null;
 		}
+		return i;
 	}
-
-	function findX(x) {
-		var hasLeft = false;
-		if (!x) x = 0;
-		var leftX = x - 1 < 0 ? 0 : x - 1;
-		if (stars[leftX + ',0']) {
-			hasLeft = true;
+	function findUp(x, y) {
+		var i = y;
+		while (!stars[x + ',' + i]) {
+			i++;
+			if (i > 9) return null;
 		}
-		if (hasLeft) {
-			return x;
-		}
-		return x - 1;
+		return i;
 	}
-
-	function findY(x, y) {
-		var retY = 0;
-		for (var i = 0; i <= y; i++) {
-			retY = i;
-			if (!stars[x + ',' + i]) break;
+	function moveToLeft(game, i) {
+		for (var y = 0; y < GAME_RECT; y++) {
+			for (var x = i + 1; x < GAME_RECT; x++) {
+				console.log(x, y, '->', x - 1, y);
+				var temp = stars[x + ',' + y];
+				stars[x + ',' + y] = stars[x - 1 + ',' + y];
+				stars[x - 1 + ',' + y] = temp;
+				if (stars[x - 1 + ',' + y]) {
+					stars[x - 1 + ',' + y].x = x - 1;
+					game.add.tween(stars[x - 1 + ',' + y].sprite).to({ x: (x - 1) * STAR_SIZE }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+				}
+			}
 		}
-		return retY;
 	}
 
 	function update() {}
