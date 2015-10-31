@@ -106,10 +106,13 @@
 	};
 	var stars = {};
 	var level,
-	    goal,
+	    goal = 1000,
+	    currentGoal,
 	    currentScore,
 	    score = 0,
-	    combo,
+	    combo1,
+	    combo2,
+	    combo3,
 	    emitter;
 
 	function GameState(game) {
@@ -132,14 +135,18 @@
 
 			level = game.add.text(20, 15, "Level 1", gameFont);
 
-			goal = game.add.text(game.world.centerX, 15, "goal: 1000", gameFont);
-			goal.anchor.set(0.5, 0);
+			currentGoal = game.add.text(game.world.centerX, 15, "goal: " + 1000, gameFont);
+			currentGoal.anchor.set(0.5, 0);
 
 			currentScore = game.add.text(game.world.centerX, 70, score, gameFont);
 			currentScore.anchor.set(0.5, 0);
 
-			combo = game.add.image(game.world.centerX, 120, "combo3");
-			combo.anchor.set(0.5, 0);
+			combo1 = game.add.image(0, 120, "combo1");
+			combo1.anchor.set(1, 0);
+			combo2 = game.add.image(0, 120, "combo2");
+			combo2.anchor.set(1, 0);
+			combo3 = game.add.image(0, 120, "combo3");
+			combo3.anchor.set(1, 0);
 			//init stars
 			init(game);
 
@@ -172,6 +179,21 @@
 		console.log(stars);
 	}
 
+	function clear() {
+		for (var pos in stars) {
+			var star = stars[pos];
+			if (star) {
+				star.sprite.destroy();
+			}
+		}
+		stars = {};
+	}
+
+	function restart(game) {
+		clear();
+		init(game);
+	}
+
 	function random(from, to) {
 		return parseInt(Math.random() * to, 10) + from;
 	}
@@ -193,7 +215,36 @@
 		}
 		//update score
 		score += len * len * 5;
+		showCombo(game, len);
 		moveClose(game);
+
+		if (isOver()) {
+			console.log('over');
+			if (goal > score) {
+				goal = 1000;
+				score = 0;
+			} else {
+				goal += 2000;
+			}
+			currentGoal.text = goal;
+			currentScore.text = score;
+			restart(game);
+			//判断是否到达目标分数
+		} else {
+				console.log('go on');
+			}
+	}
+
+	//检查是否结束
+	function isOver() {
+		for (var pos in stars) {
+			var star = stars[pos];
+			if (star) {
+				var found = star.findSame(stars);
+				if (found.length >= 2) return false;
+			}
+		}
+		return true;
 	}
 
 	function moveClose(game) {
@@ -241,7 +292,7 @@
 		}
 		console.log(stars);
 	}
-
+	//纵向查找没有星星的位置
 	function nullPos(x) {
 		var i = 0;
 		while (stars[x + ',' + i]) {
@@ -250,12 +301,14 @@
 		}
 		return i;
 	}
+	//查看某列是否没有星星
 	function nullLine(i) {
 		if (nullPos(i) == 0) {
 			return true;
 		}
 		return false;
 	}
+	//向上查找存在星星的位置
 	function findUp(x, y) {
 		var i = y;
 		while (!stars[x + ',' + i]) {
@@ -264,6 +317,7 @@
 		}
 		return i;
 	}
+	//查找右边存在星星的一列位置
 	function findRight(x) {
 		var i = x;
 		while (!stars[i + ',0']) {
@@ -286,8 +340,23 @@
 		}
 	}
 
+	function showCombo(game, len) {
+		var combo = combo1;
+		if (len > 7) {
+			combo = combo3;
+		} else if (len > 3) {
+			combo = combo2;
+		}
+		game.add.tween(combo).to({ x: game.world.centerX + combo.width * 0.5 }, 200, Phaser.Easing.Quadratic.InOut, true, 0);
+		game.add.tween(combo).to({ x: 0 }, 200, Phaser.Easing.Quadratic.InOut, true, 600);
+	}
+
 	function update() {
-		currentScore.text = score;
+		var current = parseInt(currentScore.text);
+		if (score > current) {
+			current++;
+			currentScore.text = current;
+		}
 	}
 
 	module.exports = function (game) {
