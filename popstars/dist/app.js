@@ -220,12 +220,14 @@
 
 		if (isOver()) {
 			console.log('over');
-			if (goal > score) {
-				goal = 1000;
-				score = 0;
-			} else {
+			if (goal > score) //闯关失败
+				{
+					goal = 1000;
+					score = 0;
+				} else {
 				goal += 2000;
 			}
+
 			currentGoal.text = goal;
 			currentScore.text = score;
 			restart(game);
