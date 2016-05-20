@@ -15,6 +15,7 @@ Star.prototype.findSame = function(all){
 	while(open.length)
 	{
 		var current = open.shift();
+		
 		if(current.color == this.color)
 		{
 			closed.push(current);
