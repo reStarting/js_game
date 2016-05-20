@@ -8,3 +8,7 @@ game.state.add('welcome', Welcome);
 game.state.start('welcome');
 
 
+function app()
+{
+
+}
