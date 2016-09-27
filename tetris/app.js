@@ -1,22 +1,29 @@
-var canvas = document.getElementById('canvas');
-var ctx = canvas.getContext('2d');
-var CELL_X = 10, 
-	CELL_Y = 16, 
-	CELL_SIZE = 25, 
-	GAME_X = CELL_X * CELL_SIZE,
-	GAME_Y = CELL_Y * CELL_SIZE,
-	START_X = CELL_X * 2 + 0.5,
-	START_Y = START_X,
-	BACKGROUND_COLOR = 'rgba(0, 0, 0, 0.8)',
-	BORDER_COLOR = 'rgba(255, 255, 255, 1)',
-	PREVIEW_X = 4,
+var canvas 				= document.getElementById('canvas');
+var ctx 				= canvas.getContext('2d');
+var CELL_X 				= 10, 
+	CELL_Y 				= 16, 
+	CELL_SIZE 			= 25, 
+	GAME_X 				= CELL_X * CELL_SIZE,
+	GAME_Y 				= CELL_Y * CELL_SIZE,
+	START_X 			= CELL_X * 2 + 0.5,
+	START_Y 			= START_X,
+	BACKGROUND_COLOR 	= 'rgba(0, 0, 0, 0.8)',
+	BORDER_COLOR 		= 'rgba(255, 255, 255, 1)',
+	PREVIEW_X 			= 4,
 	// PREVIEW_Y = PREVIEW_X,
-	PREVIEW_SIZE = PREVIEW_X * CELL_SIZE,
-	PREVIEW_START_X = (START_X + GAME_X) + START_X * 2,
-	LEVEL_X = PREVIEW_START_X,
-	LEVEL_Y = PREVIEW_SIZE + START_Y * 3,
-	SCORE_X = LEVEL_X,
-	SCORE_Y = LEVEL_Y + START_Y * 2;
+	PREVIEW_SIZE 		= PREVIEW_X * CELL_SIZE,
+	PREVIEW_START_X 	= (START_X + GAME_X) + START_X * 2,
+	LEVEL_X 			= PREVIEW_START_X,
+	LEVEL_Y 			= PREVIEW_SIZE + START_Y * 3,
+	SCORE_X 			= LEVEL_X,
+	SCORE_Y 			= LEVEL_Y + START_Y * 2,
+	COLORS  			= ['#0367bO', '#f1f1f1', '#dd00dd'];
+
+
+function Tetris() {
+	var index = Math.floor(Math.random() * 3);
+	this.color = COLORS[index];
+}
 
 
 function drawBackground() {
@@ -42,16 +49,21 @@ function drawBackground() {
 		ctx.moveTo(PREVIEW_START_X, y);
 		ctx.lineTo(PREVIEW_START_X + PREVIEW_SIZE, y);
 	}
-	ctx.font = "16px monca";
+	ctx.font = "1.2em palatino";
 	ctx.strokeStyle = BORDER_COLOR;
+	ctx.fillStyle = BORDER_COLOR;
 
-	ctx.strokeText('Level: 1', LEVEL_X, LEVEL_Y)
+	ctx.fillText('Level: 1', LEVEL_X, LEVEL_Y)
 
-	ctx.strokeText('Score: 0', SCORE_X, SCORE_Y)
-
+	ctx.fillText('Score: 0', SCORE_X, SCORE_Y)
 	
 	ctx.stroke();
 	ctx.restore();
 }
 
-drawBackground()
+function loop(timestamp) {
+	drawBackground();
+	requestAnimationFrame(arguments.callee);
+}
+
+requestAnimationFrame(loop);
