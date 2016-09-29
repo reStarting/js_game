@@ -1,69 +1,215 @@
-var canvas 				= document.getElementById('canvas');
-var ctx 				= canvas.getContext('2d');
-var CELL_X 				= 10, 
-	CELL_Y 				= 16, 
-	CELL_SIZE 			= 25, 
-	GAME_X 				= CELL_X * CELL_SIZE,
-	GAME_Y 				= CELL_Y * CELL_SIZE,
-	START_X 			= CELL_X * 2 + 0.5,
-	START_Y 			= START_X,
-	BACKGROUND_COLOR 	= 'rgba(0, 0, 0, 0.8)',
-	BORDER_COLOR 		= 'rgba(255, 255, 255, 1)',
-	PREVIEW_X 			= 4,
-	// PREVIEW_Y = PREVIEW_X,
-	PREVIEW_SIZE 		= PREVIEW_X * CELL_SIZE,
-	PREVIEW_START_X 	= (START_X + GAME_X) + START_X * 2,
-	LEVEL_X 			= PREVIEW_START_X,
-	LEVEL_Y 			= PREVIEW_SIZE + START_Y * 3,
-	SCORE_X 			= LEVEL_X,
-	SCORE_Y 			= LEVEL_Y + START_Y * 2,
-	COLORS  			= ['#0367bO', '#f1f1f1', '#dd00dd'];
 
+function Board(dom) {
+	this.dom = dom;
+	this.flag = '<span class="cube active"></span>';
+	this.blank = '<span class="cube blank"></span>';
+	this.width = 10;
+	this.height = 20;
+	this.cells = this.newBoard();
+	this.startX = 4;
+	this.startY = 0;
+	this.prevX = this.startX;
+	this.prevY = this.startY;
+	this.speed = 1;
+	this.active = {current: null, x: 0, y: 0};
+	this.fix = this.newBoard();
+	this.lastTime = 0;
+}
 
-function Tetris() {
-	var index = Math.floor(Math.random() * 3);
-	this.color = COLORS[index];
+Board.prototype.newBoard = function() {
+	var b = [];
+	for(var y = 0, len = this.height; y < len; y++) {
+		var row = [];
+		for(var x = 0, l = this.width; x < l; x++) {
+			row.push(this.blank)
+		}
+		b.push(row);
+	}
+	return b;
+}
+
+Board.prototype.setActive = function(act) {
+	this.active = {
+		current: act,
+		x: this.startX,
+		y: this.startY
+	};
+};
+
+Board.prototype.update = function(time) {
+	var tmpY = this.active.y;
+	if(time - this.lastTime > 400) {
+		tmpY = this.active.y + this.speed;	
+		this.lastTime = time;
+	}
+	var active = this.active.current;
+
+	var pos = active.getPosBaseOn(this.active.x, tmpY);
+
+	var canMoving = this.check(pos);
+
+	if(!canMoving) {
+		var prevPos = active.getPosBaseOn(this.prevX, this.prevY);
+		for(i=0, len=prevPos.length; i<len; i++) {
+			var pp = prevPos[i];
+			this.fix[pp.y][pp.x] = this.flag;
+			this.removeOrNot(pp.y);
+		}
+		return false;
+	}
+
+	this.prevY = this.active.y = tmpY;
+	this.prevX = this.active.x;
+
+	for(var i=0, len=this.fix.length; i<len; i++) {
+		this.cells[i] = this.fix[i].slice();
+	}
+
+	for(i=0, len=pos.length; i<len; i++) {
+		var p = pos[i];
+		this.cells[p.y][p.x] = this.flag;
+	}
+
+	this.draw();
+	return true;
+};
+
+Board.prototype.removeOrNot = function(y) {
+	var index = this.fix[y].indexOf(this.blank);
+	if(index != -1) {
+		return;
+	}
+	this.fix.splice(y, 1);
+	var row = [];
+	for(var x = 0, l = this.width; x < l; x++) {
+		row.push(this.blank)
+	}
+	this.fix.unshift(row)
+}
+
+Board.prototype.check = function(pos) {
+	for(var i=0, len=pos.length; i<len; i++) {
+		var p = pos[i];
+		var row = this.fix[p.y];
+		if(row == undefined) {
+			return false;
+		}
+		var cell = row[p.x];
+		if(cell == this.flag) {
+			return false;
+		}
+	}
+	return true;
+}
+
+Board.prototype.draw = function() {
+	var out = '';
+	for(var i = 0, len = this.cells.length; i < len; i++) {
+		out += this.cells[i].join(' ') + '<br/>';
+	}
+	dom.innerHTML = out;
+};
+
+Board.prototype.left = function() {
+	var nextX = this.active.x - 1;
+	var pos = this.active.current.getPosBaseOn(nextX, this.active.y);
+	for(var i=0, len=pos.length; i<len; i++) {
+		if(pos[i].x < 0 || this.fix[pos[i].y][pos[i].x] == this.flag) {
+			return;
+		}
+	}
+	this.active.x = nextX;
+}
+Board.prototype.right = function() {
+	var nextX = this.active.x + 1;
+	var pos = this.active.current.getPosBaseOn(nextX, this.active.y);
+	for(var i=0, len=pos.length; i<len; i++) {
+		if(pos[i].x >= this.width) {
+			return;
+		}
+	}
+	this.active.x = nextX;	
+}
+
+function Tetris () {
+	this.shapes = [
+		[
+			[0, 1, 0, 0],
+			[1, 1, 0, 0],
+			[1, 0, 0, 0],
+			[0, 0, 0, 0]
+		],
+		[
+			[1, 1, 0, 0],
+			[1, 1, 0, 0],
+			[0, 0, 0, 0],
+			[0, 0, 0, 0]	
+		],
+		[
+			[1, 0, 0, 0],
+			[1, 0, 0, 0],
+			[1, 0, 0, 0],
+			[1, 0, 0, 0]
+		],
+		[
+			[1, 1, 0, 0],
+			[1, 0, 0, 0],
+			[1, 0, 0, 0],
+			[0, 0, 0, 0]
+		]
+	]
+	this.random()
+}
+Tetris.prototype.random = function() {
+	var idx = ~~(Math.random() * this.shapes.length);
+	this.shape = this.shapes[idx]
+}
+Tetris.prototype.getPosBaseOn = function(x, y) {
+	var pos = [];
+	for(var i=0, len=this.shape.length; i<len; i++) {
+		var row = this.shape[i];
+		for(var j=0, l=row.length; j<l; j++) {
+			if(row[j] == 1) {
+				var newPos = {
+					x: j + x,
+					y: i + y
+				};
+				pos.push(newPos)
+			}
+		}
+	}
+	return pos;
 }
 
 
-function drawBackground() {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	ctx.save();
-	ctx.fillStyle = BACKGROUND_COLOR;
-	ctx.fillRect(0, 0, canvas.width, canvas.height);
-	//画主游戏格子
-	for(var i = START_X; i<= GAME_X + START_X; i+=CELL_SIZE) {
-		ctx.moveTo(i, START_Y);
-		ctx.lineTo(i, GAME_Y + START_Y);
-	}
-	for(var j = START_Y; j <= GAME_Y + START_Y; j += CELL_SIZE) {
-		ctx.moveTo(START_X, j);
-		ctx.lineTo(GAME_X + START_X, j);
-	}
-	//画预览格子
-	for(var x = PREVIEW_START_X; x <= PREVIEW_SIZE + PREVIEW_START_X; x += CELL_SIZE) {
-		ctx.moveTo(x, START_Y);
-		ctx.lineTo(x, PREVIEW_SIZE + START_Y);
-	}
-	for(var y = START_Y; y <= PREVIEW_SIZE + START_Y; y += CELL_SIZE) {
-		ctx.moveTo(PREVIEW_START_X, y);
-		ctx.lineTo(PREVIEW_START_X + PREVIEW_SIZE, y);
-	}
-	ctx.font = "1.2em palatino";
-	ctx.strokeStyle = BORDER_COLOR;
-	ctx.fillStyle = BORDER_COLOR;
+var dom = document.getElementById("game");
+var board = new Board(dom);
+var active = new Tetris();
+var next = new Tetris();
+board.setActive(active);
 
-	ctx.fillText('Level: 1', LEVEL_X, LEVEL_Y)
-
-	ctx.fillText('Score: 0', SCORE_X, SCORE_Y)
-	
-	ctx.stroke();
-	ctx.restore();
+function loop(time) {
+	var canMoving = board.update(time);	
+	if(!canMoving) {
+		var tmp = next;
+		next = active;
+		active = tmp;
+		next.random();
+		board.setActive(active);
+	}
+	requestAnimationFrame(arguments.callee)
 }
 
-function loop(timestamp) {
-	drawBackground();
-	requestAnimationFrame(arguments.callee);
+function move(e) {
+	var code = e.keyCode;
+	if(code == 37) { //左移
+		board.left();
+	} else if(code == 39) { //右移 
+		board.right();
+	}
 }
-
+document.addEventListener('keydown', move, false);
 requestAnimationFrame(loop);
+
+
+
