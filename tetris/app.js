@@ -6,14 +6,17 @@ function Board(dom) {
 	this.width = 10;
 	this.height = 20;
 	this.startX = 4;
-	this.startY = -1;
-	this.prevX = this.startX;
-	this.prevY = this.startY;
+	this.startY = 0;
 	this.speed = 1;
+	this.level = 0;
+	this.speeds = [800, 500, 300, 200, 100];
+	this.interval = this.speeds[this.level];
 	this.restart();
 }
 
 Board.prototype.restart = function() {
+	this.prevX = this.startX;
+	this.prevY = this.startY;
 	this.lastTime = 0;
 	this.cells = this.newBoard();
 	this.fix = this.newBoard();
@@ -48,7 +51,7 @@ Board.prototype.setActive = function(act) {
 
 Board.prototype.update = function(time) {
 	var tmpY = this.active.y;
-	if(time - this.lastTime > 10) {
+	if(time - this.lastTime > this.interval) {
 		tmpY = this.active.y + this.speed;	
 		this.lastTime = time;
 	}
@@ -66,7 +69,8 @@ Board.prototype.update = function(time) {
 			this.removeOrNot(pp.y);
 		}
 		if(this.isOver()) {
-			alert('over')
+			console.log('over')
+			this.restart();
 		}
 		return false;
 	}
@@ -115,7 +119,10 @@ Board.prototype.check = function(pos) {
 	return true;
 }
 Board.prototype.isOver = function() {
-	return this.fix[0][this.startX] == this.flag || this.fix[0][this.startX + 1] == this.flag
+	return this.fix[0][this.startX] == this.flag 
+		|| this.fix[0][this.startX + 1] == this.flag
+		|| this.fix[1][this.startX] == this.flag 
+		|| this.fix[1][this.startX + 1] == this.flag
 }
 
 Board.prototype.draw = function() {
@@ -130,7 +137,9 @@ Board.prototype.left = function() {
 	var nextX = this.active.x - 1;
 	var pos = this.active.current.getPosBaseOn(nextX, this.active.y);
 	for(var i=0, len=pos.length; i<len; i++) {
-		if(pos[i].x < 0 || this.fix[pos[i].y][pos[i].x] == this.flag) {
+		if(pos[i].x < 0
+			 || this.fix[pos[i].y] == undefined
+			 || this.fix[pos[i].y][pos[i].x] == this.flag) {
 			return;
 		}
 	}
@@ -140,45 +149,61 @@ Board.prototype.right = function() {
 	var nextX = this.active.x + 1;
 	var pos = this.active.current.getPosBaseOn(nextX, this.active.y);
 	for(var i=0, len=pos.length; i<len; i++) {
-		if(pos[i].x >= this.width) {
+		if(pos[i].x >= this.width || this.fix[pos[i].y][pos[i].x] == this.flag) {
 			return;
 		}
 	}
 	this.active.x = nextX;	
 }
+Board.prototype.rotate = function() {
+	this.active.current.rotate();
+}
+
+Board.prototype.speedup = function() {
+	this.interval = 10;
+}
+Board.prototype.speeddown = function() {
+	this.interval = this.speeds[this.level];
+}
 
 function Tetris () {
 	this.shapes = [
-		[
-			[0, 1, 0, 0],
-			[1, 1, 0, 0],
-			[1, 0, 0, 0],
-			[0, 0, 0, 0]
-		],
-		[
-			[1, 1, 0, 0],
-			[1, 1, 0, 0],
-			[0, 0, 0, 0],
-			[0, 0, 0, 0]	
-		],
-		[
-			[1, 0, 0, 0],
-			[1, 0, 0, 0],
-			[1, 0, 0, 0],
-			[1, 0, 0, 0]
-		],
-		[
-			[1, 1, 0, 0],
-			[1, 0, 0, 0],
-			[1, 0, 0, 0],
-			[0, 0, 0, 0]
-		]
+		[0xcc00],
+		[0x4c80, 0xc600],
+		[0x8c40, 0x6c00],
+		[0xf000, 0x8888],
+		[0x88c0, 0xe800, 0xc440, 0x2e00],
+		[0x44c0, 0x8e00, 0xc880, 0xe200],
+		[0xe400, 0x4c40, 0x4e00, 0x8c80]
 	]
 	this.random()
 }
 Tetris.prototype.random = function() {
-	var idx = ~~(Math.random() * this.shapes.length);
-	this.shape = this.shapes[idx]
+	this.type = ~~(Math.random() * this.shapes.length);
+	this.idx = ~~(Math.random() * this.shapes[this.type].length)
+	this.change();
+}
+Tetris.prototype.rotate = function() {
+	this.idx = (this.idx + 1) % this.shapes[this.type].length;
+	this.change();
+}
+Tetris.prototype.change = function() {
+	var shape16 = this.shapes[this.type][this.idx];
+	var shape2 = shape16.toString(2);
+	var shapeArr = shape2.split('');
+	while(shapeArr.length < 16) {
+		shapeArr.unshift(0);
+	}
+	var shape = [];
+	for(var i=0, len=shapeArr.length; i<len; i++) {
+		var cell = i%4;
+		var row = parseInt(i/4);
+		if(cell == 0) {
+			shape[row] = [];
+		}
+		shape[row][cell] = parseInt(shapeArr[i]);
+	}
+	this.shape = shape;
 }
 Tetris.prototype.getPosBaseOn = function(x, y) {
 	var pos = [];
@@ -222,9 +247,21 @@ function move(e) {
 		board.left();
 	} else if(code == 39) { //右移 
 		board.right();
+	} else if(code == 40) {
+		board.speedup();
+	} else if(code == 38) {
+		board.rotate();
 	}
 }
+
+function down(e) {
+	if(e.keyCode = 40) {
+		board.speeddown();
+	}
+}
+
 document.addEventListener('keydown', move, false);
+document.addEventListener('keyup', down, false);
 requestAnimationFrame(loop);
 
 
