@@ -5,15 +5,25 @@ function Board(dom) {
 	this.blank = '<span class="cube blank"></span>';
 	this.width = 10;
 	this.height = 20;
-	this.cells = this.newBoard();
 	this.startX = 4;
-	this.startY = 0;
+	this.startY = -1;
 	this.prevX = this.startX;
 	this.prevY = this.startY;
 	this.speed = 1;
-	this.active = {current: null, x: 0, y: 0};
-	this.fix = this.newBoard();
+	this.restart();
+}
+
+Board.prototype.restart = function() {
 	this.lastTime = 0;
+	this.cells = this.newBoard();
+	this.fix = this.newBoard();
+	if(!this.active) {
+		this.active = {current: null, x: 0, y: 0};
+	} else {
+		this.active.x = 0;
+		this.active.y = 0;
+	}
+	
 }
 
 Board.prototype.newBoard = function() {
@@ -38,7 +48,7 @@ Board.prototype.setActive = function(act) {
 
 Board.prototype.update = function(time) {
 	var tmpY = this.active.y;
-	if(time - this.lastTime > 400) {
+	if(time - this.lastTime > 10) {
 		tmpY = this.active.y + this.speed;	
 		this.lastTime = time;
 	}
@@ -54,6 +64,9 @@ Board.prototype.update = function(time) {
 			var pp = prevPos[i];
 			this.fix[pp.y][pp.x] = this.flag;
 			this.removeOrNot(pp.y);
+		}
+		if(this.isOver()) {
+			alert('over')
 		}
 		return false;
 	}
@@ -100,6 +113,9 @@ Board.prototype.check = function(pos) {
 		}
 	}
 	return true;
+}
+Board.prototype.isOver = function() {
+	return this.fix[0][this.startX] == this.flag || this.fix[0][this.startX + 1] == this.flag
 }
 
 Board.prototype.draw = function() {
