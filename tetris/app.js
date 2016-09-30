@@ -1,6 +1,7 @@
 
-function Board(dom) {
+function Board(dom, scoreDom) {
 	this.dom = dom;
+	this.scoreDom = scoreDom;
 	this.flag = '<span class="cube active"></span>';
 	this.blank = '<span class="cube blank"></span>';
 	this.width = 10;
@@ -8,13 +9,17 @@ function Board(dom) {
 	this.startX = 4;
 	this.startY = 0;
 	this.speed = 1;
-	this.level = 0;
 	this.speeds = [800, 500, 300, 200, 100];
-	this.interval = this.speeds[this.level];
+	this.scores = [10, 30, 50, 70];
+	this.levelup = [1000, 3000, 6000, 9000, 12000];
 	this.restart();
 }
 
 Board.prototype.restart = function() {
+	this.level = 0;
+	this.score = 0;
+	this.interval = this.speeds[this.level % this.speeds.length];
+
 	this.prevX = this.startX;
 	this.prevY = this.startY;
 	this.lastTime = 0;
@@ -26,6 +31,7 @@ Board.prototype.restart = function() {
 		this.active.x = 0;
 		this.active.y = 0;
 	}
+	this.scoreDom.innerHTML = "分数: " + this.score + ", 等级: " + this.level
 	
 }
 
@@ -63,11 +69,23 @@ Board.prototype.update = function(time) {
 
 	if(!canMoving) {
 		var prevPos = active.getPosBaseOn(this.prevX, this.prevY);
+		var removeLines = 0;
 		for(i=0, len=prevPos.length; i<len; i++) {
 			var pp = prevPos[i];
 			this.fix[pp.y][pp.x] = this.flag;
-			this.removeOrNot(pp.y);
+			if(this.removeOrNot(pp.y)) {
+				removeLines++;
+			}
 		}
+		if(removeLines > 0) {
+			this.score += this.scores[removeLines - 1];
+			this.scoreDom.innerHTML = "分数: " + this.score + ", 等级: " + this.level
+		}
+		if(this.score > this.levelup[this.level % this.levelup.length]) {
+			this.level += 1;
+			this.scoreDom.innerHTML = "分数: " + this.score + ", 等级: " + this.level
+		}
+
 		if(this.isOver()) {
 			console.log('over')
 			this.restart();
@@ -94,7 +112,7 @@ Board.prototype.update = function(time) {
 Board.prototype.removeOrNot = function(y) {
 	var index = this.fix[y].indexOf(this.blank);
 	if(index != -1) {
-		return;
+		return false;
 	}
 	this.fix.splice(y, 1);
 	var row = [];
@@ -102,6 +120,7 @@ Board.prototype.removeOrNot = function(y) {
 		row.push(this.blank)
 	}
 	this.fix.unshift(row)
+	return true;
 }
 
 Board.prototype.check = function(pos) {
@@ -128,7 +147,7 @@ Board.prototype.isOver = function() {
 Board.prototype.draw = function() {
 	var out = '';
 	for(var i = 0, len = this.cells.length; i < len; i++) {
-		out += this.cells[i].join(' ') + '<br/>';
+		out += this.cells[i].join('') + '<br/>';
 	}
 	dom.innerHTML = out;
 };
@@ -156,14 +175,36 @@ Board.prototype.right = function() {
 	this.active.x = nextX;	
 }
 Board.prototype.rotate = function() {
-	this.active.current.rotate();
+	var shape = this.active.current.rotate();
+	var pos = this.active.current.getPosBaseOn(this.active.x, this.active.y, shape);
+	var maxOffsetX = 0;
+	var maxOffsetY = 0;
+	for(var i=0, len=pos.length; i<len; i++) {
+		if(pos[i].x - (this.width - 1) > maxOffsetX) {
+			maxOffsetX = pos[i].x - (this.width - 1);
+		}
+		if(pos[i].y - this.height > maxOffsetY) {
+			maxOffsetY = pos[i].y - this.height
+		}
+	}
+
+	for(i=0, len=pos.length; i<len; i++) {
+		var y = pos[i].y - maxOffsetY;
+		var x = pos[i].x - maxOffsetX;
+		if(this.fix[y] == undefined || this.fix[y][x] == this.flag) {
+			return;
+		}
+	}
+	this.active.x -= maxOffsetX;
+	this.active.y -=maxOffsetY;
+	this.active.current.shape = shape;
 }
 
 Board.prototype.speedup = function() {
 	this.interval = 10;
 }
 Board.prototype.speeddown = function() {
-	this.interval = this.speeds[this.level];
+	this.interval = this.speeds[this.level % this.speeds.length];
 }
 
 function Tetris () {
@@ -181,11 +222,25 @@ function Tetris () {
 Tetris.prototype.random = function() {
 	this.type = ~~(Math.random() * this.shapes.length);
 	this.idx = ~~(Math.random() * this.shapes[this.type].length)
-	this.change();
+	this.shape = this.change();
+}
+Tetris.prototype.show = function(dom) {
+	var out = '';
+	for(var i = 0, len = this.shape.length; i < len; i++) {
+		for(var j= 0, l=this.shape[i].length; j<l; j++) {
+			if(this.shape[i][j] == 1) {
+				out += '<span class="cube active"></span>';
+			} else {
+				out += '<span class="cube blank"></span>';
+			}
+		}
+		out += '<br/>'
+	}
+	dom.innerHTML = out;
 }
 Tetris.prototype.rotate = function() {
 	this.idx = (this.idx + 1) % this.shapes[this.type].length;
-	this.change();
+	return this.change();
 }
 Tetris.prototype.change = function() {
 	var shape16 = this.shapes[this.type][this.idx];
@@ -203,12 +258,13 @@ Tetris.prototype.change = function() {
 		}
 		shape[row][cell] = parseInt(shapeArr[i]);
 	}
-	this.shape = shape;
+	return shape;
 }
-Tetris.prototype.getPosBaseOn = function(x, y) {
+Tetris.prototype.getPosBaseOn = function(x, y, shape) {
+	var shapes = shape || this.shape;
 	var pos = [];
-	for(var i=0, len=this.shape.length; i<len; i++) {
-		var row = this.shape[i];
+	for(var i=0, len=shapes.length; i<len; i++) {
+		var row = shapes[i];
 		for(var j=0, l=row.length; j<l; j++) {
 			if(row[j] == 1) {
 				var newPos = {
@@ -224,9 +280,12 @@ Tetris.prototype.getPosBaseOn = function(x, y) {
 
 
 var dom = document.getElementById("game");
-var board = new Board(dom);
+var score = document.getElementById("level");
+var preview = document.getElementById('preview');
+var board = new Board(dom, score);
 var active = new Tetris();
 var next = new Tetris();
+next.show(preview);
 board.setActive(active);
 
 function loop(time) {
@@ -236,6 +295,7 @@ function loop(time) {
 		next = active;
 		active = tmp;
 		next.random();
+		next.show(preview);
 		board.setActive(active);
 	}
 	requestAnimationFrame(arguments.callee)
@@ -255,7 +315,7 @@ function move(e) {
 }
 
 function down(e) {
-	if(e.keyCode = 40) {
+	if(e.keyCode == 40) {
 		board.speeddown();
 	}
 }
