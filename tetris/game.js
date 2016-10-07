@@ -51,26 +51,82 @@ var height = 20,
 		[0x44c0, 0x8e00, 0xc880, 0xe200],
 		[0xe400, 0x4c40, 0x4e00, 0x8c80]
 	],
-	active = {shape:[], x: 4, y: 0},
+	active = {shape:[], x: 4, y: 0, type:~~(Math.random()*shapes.length), idx:0},
 	board  = [bottom];
 
 while(board.length <= height) {
 	board.unshift(line);
 }
-console.log(board)
 
-function rotate() {
+//转成12位
+function change() {
+	var shape = shapes[active.type][active.idx];
 	for(var i=0; i<4; i++) {
-		active.shape[i] = (sixteen>>(12 - i * 4)&15)<<6;
+		active.shape[i] = (shape>>(12 - i * 4)&15)<<7>>active.x;
 	}
 }
 
-map16to2Arr(shapes[0][0])
-console.log(active)
+function show() {
+	var out = '';
+	var showBoard = board.slice();
+	[].splice.apply(showBoard, [active.y, active.shape.length].concat(active.shape));
+	for(var i=0,len=showBoard.length-1; i<len; i++) {
+		var line = showBoard[i].toString(2);
+		while(line.length < 12) {
+			line = '0' + line;
+		}
+		out += line.slice(1, -1) +'<br/>';
+	}
+	out = out.replace(/1/g, '<span class="cube active"></span>').replace(/0/g, '<span class="cube blank"></span>')
+	document.getElementById("game2").innerHTML = out;
+}
 
 
 
+var lastTime = 0;
+change()
 
+function loop(time) {
+	if(time - lastTime > 100) {
+		lastTime = time;
+		// active.type = ~~(Math.random()*shapes.length);
+		// change();
+		show();
+	}
+	requestAnimationFrame(arguments.callee);
+}
+
+requestAnimationFrame(loop);
+
+function move(e) {
+	var code = e.keyCode;
+	if(code == 37) {//左
+		var next = [];
+		for(var i=0; i<4; i++) {
+			next[i] = active.shape[i]<<1;
+			if(next[i].toString(2).length >= 12) {
+				return;
+			}
+		}	
+		active.shape = next;
+		active.x--;
+	} else if(code == 39) {//右
+		var next = [];
+		for(var i=0; i<4; i++) {
+			next[i] = active.shape[i]>>1;
+			if(next[i]&1 > 0) {
+				return;
+			}
+		}	
+		active.shape = next;
+		active.x++;
+	} else if(code == 38) {
+		active.idx = (active.idx + 1) % shapes[active.type].length;
+		change();
+	}
+}
+
+document.addEventListener('keydown', move, false);
 
 
 
