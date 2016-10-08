@@ -97,7 +97,7 @@ function loop(time) {
 		lastTime = time;
 		// active.type = ~~(Math.random()*shapes.length);
 		// change();
-		show();
+		update();
 	}
 	requestAnimationFrame(arguments.callee);
 }
@@ -118,6 +118,17 @@ function move(step) {
 	}	
 	active.shape = next;
 	active.x += step;
+}
+
+function update() {
+	var next = active.y + 1;
+	for(var i=0; i<4; i++) {
+		if(active.shape[i] & board[active.y + i] > 0) {
+			return;
+		}
+	}
+	active.y = next;
+	show();
 }
 
 function action(e) {
