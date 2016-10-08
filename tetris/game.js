@@ -61,14 +61,14 @@ while(board.length <= height) {
 //转成12位
 function change() {
 	var shape = shapes[active.type][active.idx];
-	var next = [], maxOffset = 0;
+	var next = [];
 	for(var i=0; i<4; i++) {
 		next[i] = (shape>>(12 - i * 4)&15)<<7>>active.x;
-		while(next[i] != 0 && (next[i]<<maxOffset)%2 != 0) {
-			maxOffset++;
+		if(next[i]%2 != 0) {
+			active.x--;
+			return change();
 		}
 	}
-	console.log(maxOffset)
 	active.shape = next;
 }
 
