@@ -61,9 +61,15 @@ while(board.length <= height) {
 //转成12位
 function change() {
 	var shape = shapes[active.type][active.idx];
+	var next = [], maxOffset = 0;
 	for(var i=0; i<4; i++) {
-		active.shape[i] = (shape>>(12 - i * 4)&15)<<7>>active.x;
+		next[i] = (shape>>(12 - i * 4)&15)<<7>>active.x;
+		while(next[i] != 0 && (next[i]<<maxOffset)%2 != 0) {
+			maxOffset++;
+		}
 	}
+	console.log(maxOffset)
+	active.shape = next;
 }
 
 function show() {
@@ -98,35 +104,35 @@ function loop(time) {
 
 requestAnimationFrame(loop);
 
-function move(e) {
+function move(step) {
+	var next = [];
+	for(var i=0; i<4; i++) {
+		if(step > 0) {
+			next[i] = active.shape[i] >> 1;	
+		} else {
+			next[i] = active.shape[i] << 1;
+		}
+		if(board[active.y + i] == undefined || (board[active.y + i] & next[i]) > 0) {
+			return
+		}
+	}	
+	active.shape = next;
+	active.x += step;
+}
+
+function action(e) {
 	var code = e.keyCode;
 	if(code == 37) {//左
-		var next = [];
-		for(var i=0; i<4; i++) {
-			next[i] = active.shape[i]<<1;
-			if(next[i].toString(2).length >= 12) {
-				return;
-			}
-		}	
-		active.shape = next;
-		active.x--;
+		move(-1);
 	} else if(code == 39) {//右
-		var next = [];
-		for(var i=0; i<4; i++) {
-			next[i] = active.shape[i]>>1;
-			if(next[i]&1 > 0) {
-				return;
-			}
-		}	
-		active.shape = next;
-		active.x++;
+		move(1);
 	} else if(code == 38) {
 		active.idx = (active.idx + 1) % shapes[active.type].length;
 		change();
 	}
 }
 
-document.addEventListener('keydown', move, false);
+document.addEventListener('keydown', action, false);
 
 
 
