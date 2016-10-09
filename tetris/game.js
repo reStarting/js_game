@@ -52,7 +52,8 @@ var height = 20,
 		[0xe400, 0x4c40, 0x4e00, 0x8c80]
 	],
 	active = {shape:[], x: 4, y: 0, type:~~(Math.random()*shapes.length), idx:0},
-	board  = [bottom];
+	board  = [bottom],
+	lastTime = 0, speed = 1;
 
 while(board.length <= height) {
 	board.unshift(line);
@@ -68,6 +69,9 @@ function change() {
 			active.x--;
 			return change();
 		}
+		if(board[active.y + i] == undefined || (board[active.y + i] & next[i]) > 0) {
+			return
+		}
 	}
 	active.shape = next;
 }
@@ -75,7 +79,12 @@ function change() {
 function show() {
 	var out = '';
 	var showBoard = board.slice();
-	[].splice.apply(showBoard, [active.y, active.shape.length].concat(active.shape));
+	for(var j=0; j<4; j++) {
+		if(showBoard[active.y + j] != undefined) {
+			showBoard[active.y + j] = showBoard[active.y + j] | active.shape[j];
+		}
+	}
+	// [].splice.apply(showBoard, [active.y, active.shape.length].concat(active.shape));
 	for(var i=0,len=showBoard.length-1; i<len; i++) {
 		var line = showBoard[i].toString(2);
 		while(line.length < 12) {
@@ -89,19 +98,17 @@ function show() {
 
 
 
-var lastTime = 0;
-change()
 
 function loop(time) {
-	if(time - lastTime > 100) {
+	if((time - lastTime) * speed > 500) {
 		lastTime = time;
-		// active.type = ~~(Math.random()*shapes.length);
-		// change();
 		update();
 	}
+	show();
 	requestAnimationFrame(arguments.callee);
 }
 
+change();
 requestAnimationFrame(loop);
 
 function move(step) {
@@ -115,20 +122,34 @@ function move(step) {
 		if(board[active.y + i] == undefined || (board[active.y + i] & next[i]) > 0) {
 			return
 		}
-	}	
+	}
 	active.shape = next;
 	active.x += step;
 }
 
 function update() {
 	var next = active.y + 1;
-	for(var i=0; i<4; i++) {
-		if(active.shape[i] & board[active.y + i] > 0) {
+	for(var i=3; i>=0; i--) {
+		if((active.shape[i] & board[next + i]) > 0) {//生成新的
+			if(active.y == 0) {
+				console.log('game over')
+				return;
+			}
+			for(var j=0; j<4; j++) {
+				if(active.y + j < board.length - 1 && board[active.y + j] != undefined) {
+					board[active.y + j] |= active.shape[j];
+					if(board[active.y + j] == bottom) {
+						board.splice(active.y + j, 1);
+						board.unshift(line);
+					}
+				}
+			}
+			active = {shape:[], x: 4, y: 0, type:~~(Math.random()*shapes.length), idx:0};
+			change();
 			return;
 		}
 	}
 	active.y = next;
-	show();
 }
 
 function action(e) {
@@ -140,10 +161,13 @@ function action(e) {
 	} else if(code == 38) {
 		active.idx = (active.idx + 1) % shapes[active.type].length;
 		change();
+	} else {
+		speed = 10;
 	}
 }
 
 document.addEventListener('keydown', action, false);
+document.addEventListener('keyup', function(){speed=1}, false);
 
 
 
