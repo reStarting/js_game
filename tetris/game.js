@@ -85,7 +85,7 @@ function show() {
 		}
 	}
 	// [].splice.apply(showBoard, [active.y, active.shape.length].concat(active.shape));
-	for(var i=0,len=showBoard.length-1; i<len; i++) {
+	for(var i = 0,len=showBoard.length-1; i<len; i++) {
 		var line = showBoard[i].toString(2);
 		while(line.length < 12) {
 			line = '0' + line;
