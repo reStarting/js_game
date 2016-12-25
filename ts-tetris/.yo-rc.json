@@ -15,7 +15,7 @@
         "original": []
       },
       "sample": "todoMVC",
-      "router": "router"
+      "router": "none"
     }
   }
 }
