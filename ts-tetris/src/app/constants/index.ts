@@ -1,0 +1,5 @@
+export const MOVE_LEFT = "move_left"
+export const MOVE_RIGHT = "move_right"
+export const MOVE_DOWN = "move_down"
+export const TRANSFORM = "transform"
+export const DROP = "drop"

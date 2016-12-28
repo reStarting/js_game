@@ -2,29 +2,24 @@ import * as React from 'react';
 import {Dispatch} from 'redux';
 import {bindActionCreators} from 'redux';
 import {connect} from 'react-redux';
-import Header from '../components/Header';
-import MainSection from '../components/MainSection';
-import {addTodo, deleteTodo, editTodo, completeTodo, completeAll, clearCompleted} from '../actions/index';
+import {moveLeft, moveRight, moveDown, transform, drop} from '../actions';
 
-interface IAppProps {
-  todos: any;
+interface AppProps {
+  tetris: any;
   actions: any;
 }
 
-interface IAppState {}
+interface AppState {}
 
-class App extends React.Component<IAppProps, IAppState> {
+class App extends React.Component<AppProps, AppState> {
   render() {
-    const {todos, actions} = this.props;
+    const {tetris, actions} = this.props;
+    console.log(tetris)
     return (
       <div>
-        <Header
-          addTodo={actions.addTodo}
-          />
-        <MainSection
-          todos={todos}
-          actions={actions}
-          />
+        {tetris.board.map(line => {
+          return <div>{line.toString(2)}</div>
+        })}
       </div>
     );
   }
@@ -32,19 +27,18 @@ class App extends React.Component<IAppProps, IAppState> {
 
 function mapStateToProps(state: any) {
   return {
-    todos: state.todos
+    tetris: state.tetris
   };
 }
 
 function mapDispatchToProps(dispatch: Dispatch<any>) {
   return {
     actions: bindActionCreators({
-      addTodo,
-      deleteTodo,
-      editTodo,
-      completeTodo,
-      completeAll,
-      clearCompleted
+      moveLeft,
+      moveRight,
+      moveDown,
+      transform,
+      drop
     }, dispatch)
   };
 }

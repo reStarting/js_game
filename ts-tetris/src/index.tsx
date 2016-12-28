@@ -5,7 +5,6 @@ import {Provider} from 'react-redux';
 import App from './app/containers/App';
 import configureStore from './app/store/configureStore';
 
-import 'todomvc-app-css/index.css';
 
 const store: Store<any> = configureStore({});
 

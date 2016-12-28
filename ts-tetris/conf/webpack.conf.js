@@ -16,7 +16,7 @@ module.exports = {
         ]
       },
       {
-        test: /.tsx$/,
+        test: /.tsx?$/,
         exclude: /node_modules/,
         loader: 'tslint-loader',
         enforce: 'pre'
@@ -30,7 +30,7 @@ module.exports = {
         ]
       },
       {
-        test: /\.tsx$/,
+        test: /\.tsx?$/,
         exclude: /node_modules/,
         loaders: [
           'react-hot-loader',

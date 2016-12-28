@@ -1,25 +1,19 @@
-import * as types from '../constants/ActionTypes';
+import * as types from '../constants';
 
-export function addTodo(text: string) {
-  return {type: types.ADD_TODO, text};
+export function moveLeft() {
+  return {type: types.MOVE_LEFT}
 }
 
-export function deleteTodo(id: number) {
-  return {type: types.DELETE_TODO, id};
+export function moveRight() {
+  return {type: types.MOVE_RIGHT}
 }
 
-export function editTodo(id: number, text: string) {
-  return {type: types.EDIT_TODO, id, text};
+export function moveDown() {
+  return {type: types.MOVE_DOWN}
 }
-
-export function completeTodo(id: number) {
-  return {type: types.COMPLETE_TODO, id};
+export function transform() {
+  return {type: types.TRANSFORM}
 }
-
-export function completeAll() {
-  return {type: types.COMPLETE_ALL};
-}
-
-export function clearCompleted() {
-  return {type: types.CLEAR_COMPLETED};
+export function drop() {
+  return {type: types.DROP}
 }
