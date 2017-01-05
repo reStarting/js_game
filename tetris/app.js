@@ -32,7 +32,7 @@ Board.prototype.restart = function() {
 		this.active.y = 0;
 	}
 	this.scoreDom.innerHTML = "分数: " + this.score + ", 等级: " + this.level
-	
+
 }
 
 Board.prototype.newBoard = function() {
@@ -58,7 +58,7 @@ Board.prototype.setActive = function(act) {
 Board.prototype.update = function(time) {
 	var tmpY = this.active.y;
 	if(time - this.lastTime > this.interval) {
-		tmpY = this.active.y + this.speed;	
+		tmpY = this.active.y + this.speed;
 		this.lastTime = time;
 	}
 	var active = this.active.current;
@@ -138,9 +138,9 @@ Board.prototype.check = function(pos) {
 	return true;
 }
 Board.prototype.isOver = function() {
-	return this.fix[0][this.startX] == this.flag 
+	return this.fix[0][this.startX] == this.flag
 		|| this.fix[0][this.startX + 1] == this.flag
-		|| this.fix[1][this.startX] == this.flag 
+		|| this.fix[1][this.startX] == this.flag
 		|| this.fix[1][this.startX + 1] == this.flag
 }
 
@@ -172,7 +172,7 @@ Board.prototype.right = function() {
 			return;
 		}
 	}
-	this.active.x = nextX;	
+	this.active.x = nextX;
 }
 Board.prototype.rotate = function() {
 	var shape = this.active.current.rotate();
@@ -289,7 +289,7 @@ next.show(preview);
 board.setActive(active);
 
 function loop(time) {
-	var canMoving = board.update(time);	
+	var canMoving = board.update(time);
 	if(!canMoving) {
 		var tmp = next;
 		next = active;
@@ -305,7 +305,7 @@ function move(e) {
 	var code = e.keyCode;
 	if(code == 37) { //左移
 		board.left();
-	} else if(code == 39) { //右移 
+	} else if(code == 39) { //右移
 		board.right();
 	} else if(code == 40) {
 		board.speedup();
@@ -320,9 +320,7 @@ function down(e) {
 	}
 }
 
+
 document.addEventListener('keydown', move, false);
 document.addEventListener('keyup', down, false);
 requestAnimationFrame(loop);
-
-
-
