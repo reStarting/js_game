@@ -22,6 +22,7 @@ export default class Snake {
     this.header = new Body(headerPoint, this.tail);
     this.direction = Direction.Right;
     this.lastTime = 0;
+    this.board.randomFood();
     window.requestAnimationFrame(t => this.move(t))
   }
   turn(direction: number) {
@@ -38,7 +39,6 @@ export default class Snake {
       return;
     }
     this.direction = direction;
-    this.eat();
   }
   move(time: number) {
     const current = this.header.getPoint();
@@ -61,6 +61,10 @@ export default class Snake {
       this.lastTime = time;
       if(this.check(next)) {
         this.header.move(next);
+        if(this.board.isFood(next.x, next.y)) {
+          this.eat();
+          this.board.randomFood();
+        }
         this.board.update();
       } else {
         console.log("游戏结束");

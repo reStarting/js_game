@@ -9,6 +9,7 @@ interface Props {
 
 export default class Board extends React.Component<Props, any> {
   snake: Snake;
+  food: Point;
   constructor(prop: Props) {
     super(prop);
     this.state = {
@@ -25,6 +26,11 @@ export default class Board extends React.Component<Props, any> {
       move: this.state + 1
     });
   }
+  randomFood() {
+    const foodX = ~~(Math.random() * this.props.width);
+    const foodY = ~~(Math.random() * this.props.height);
+    this.food = new Point(foodX, foodY);
+  }
   render() {
     return (
       <div>{this.renderRow()}</div>
@@ -37,11 +43,17 @@ export default class Board extends React.Component<Props, any> {
     }
     return rows;
   }
+  isFood(x: number, y: number) {
+    if(this.food == null) {
+      return false;
+    }
+    return this.food.x == x && this.food.y == y;
+  }
   renderCell(row: number) {
     let cells = [];
     for(let i=0; i<this.props.width; i++) {
       let className = "cell";
-      if(this.snake.isBody(new Point(i, row))) {
+      if(this.isFood(i, row) || this.snake.isBody(new Point(i, row))) {
         className += " body";
       }
       cells.push(<span className={className} key={"cell"+i}><i></i></span>)

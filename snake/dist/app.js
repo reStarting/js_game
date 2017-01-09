@@ -21504,6 +21504,11 @@
 	            move: this.state + 1
 	        });
 	    }
+	    randomFood() {
+	        const foodX = ~~(Math.random() * this.props.width);
+	        const foodY = ~~(Math.random() * this.props.height);
+	        this.food = new Point_1.default(foodX, foodY);
+	    }
 	    render() {
 	        return (React.createElement("div", null, this.renderRow()));
 	    }
@@ -21514,11 +21519,17 @@
 	        }
 	        return rows;
 	    }
+	    isFood(x, y) {
+	        if (this.food == null) {
+	            return false;
+	        }
+	        return this.food.x == x && this.food.y == y;
+	    }
 	    renderCell(row) {
 	        let cells = [];
 	        for (let i = 0; i < this.props.width; i++) {
 	            let className = "cell";
-	            if (this.snake.isBody(new Point_1.default(i, row))) {
+	            if (this.isFood(i, row) || this.snake.isBody(new Point_1.default(i, row))) {
 	                className += " body";
 	            }
 	            cells.push(React.createElement("span", { className: className, key: "cell" + i },
@@ -21898,6 +21909,7 @@
 	        this.header = new Body_1.default(headerPoint, this.tail);
 	        this.direction = 39 /* Right */;
 	        this.lastTime = 0;
+	        this.board.randomFood();
 	        window.requestAnimationFrame(t => this.move(t));
 	    }
 	    turn(direction) {
@@ -21912,7 +21924,6 @@
 	            return;
 	        }
 	        this.direction = direction;
-	        this.eat();
 	    }
 	    move(time) {
 	        const current = this.header.getPoint();
@@ -21935,6 +21946,10 @@
 	            this.lastTime = time;
 	            if (this.check(next)) {
 	                this.header.move(next);
+	                if (this.board.isFood(next.x, next.y)) {
+	                    this.eat();
+	                    this.board.randomFood();
+	                }
 	                this.board.update();
 	            }
 	            else {
