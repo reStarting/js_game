@@ -1,10 +1,9 @@
 import * as React from 'react'
 import {render} from 'react-dom'
-import HelloMessage from './Hello'
 import Board from './Board';
+import './index.css'
 
 render(
-    <HelloMessage name="Hello" />, 
+    <Board width={30} height={20} />, 
     document.getElementById('container')
 )
-new Board(30, 20);
